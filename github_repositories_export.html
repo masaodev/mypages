@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <title>GitHubリポジトリ一覧取得</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    label {
+      display: inline-block;
+      width: 100px;
+    }
+
+    input {
+      margin-bottom: 10px;
+      width: 500px;
+      padding: 5px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 10px;
+    }
+
+    #downloadLink {
+      display: block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>GitHubリポジトリ一覧取得</h1>
+  </header>
+
+  <section>
+    <div>
+      <label for="apiUrl">API URL:</label>
+      <input type="text" id="apiUrl" placeholder="https://api.github.com/users/username">
+    </div>
+    <div>
+      <label for="apiToken">API Token:</label>
+      <input type="text" id="apiToken" placeholder="Your GitHub API Token">
+    </div>
+    <button id="downloadButton">リポジトリ一覧をダウンロード</button>
+    <a id="downloadLink" style="display:none;">ダウンロードリンク</a>
+  </section>
+
+  <script>
+    // CSVファイルを作成してダウンロードリンクを表示する関数
+    function createDownloadLink(csvData) {
+      const csvContent = csvData.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.getElementById('downloadLink');
+      const url = URL.createObjectURL(blob);
+      link.textContent = "ダウンロード";
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'repositories.csv');
+      link.style.display = 'block';
+    }
+
+    // GitHub APIからリポジトリ情報を取得する非同期関数
+    async function fetchGithubRepositories(apiUrl, apiToken, page) {
+      const requestURL = `${apiUrl}/repos?per_page=5&page=${page}`;
+      const headers = new Headers({
+        'Authorization': `token ${apiToken}`,
+      });
+      const requestOptions = {
+        method: 'GET',
+        headers: headers
+      };
+      const response = await fetch(requestURL, requestOptions);
+      return await response.json();
+    }
+
+    // メイン関数：APIからデータを取得し、CSVデータを生成する
+    async function generateCSV() {
+      const apiUrl = document.getElementById('apiUrl').value;
+      const apiToken = document.getElementById('apiToken').value;
+      const csvData = [];
+
+      let resJson = await fetchGithubRepositories(apiUrl, apiToken, 1);
+      const keys = Object.keys(resJson[0]);
+      csvData.push(keys.join(","));
+
+      let page = 1;
+      while (resJson.length > 0) {
+        resJson = await fetchGithubRepositories(apiUrl, apiToken, page);
+        resJson.forEach(repo => {
+          const row = keys.map(key => repo[key] || '');
+          csvData.push(row.join(","));
+        });
+        page++;
+      }
+
+      createDownloadLink(csvData);
+    }
+
+    // ボタンクリック時にメイン関数を呼び出すイベントリスナーを追加
+    document.getElementById('downloadButton').addEventListener('click', generateCSV);
+  </script>
+
+</body>
+</html>
