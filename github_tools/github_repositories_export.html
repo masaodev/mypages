@@ -55,6 +55,7 @@
   <script>
     // CSVファイルを作成してダウンロードリンクを表示する関数
     function createDownloadLink(csvData) {
+      // BOM付きCSV
       const csvContent = '\uFEFF' + csvData.join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.getElementById('downloadLink');
