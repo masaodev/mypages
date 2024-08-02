@@ -67,7 +67,7 @@
 
     // GitHub APIからリポジトリ情報を取得する非同期関数
     async function fetchGithubRepositories(apiUrl, apiToken, page) {
-      const requestURL = `${apiUrl}/repos?per_page=5&page=${page}`;
+      const requestURL = `${apiUrl}/repos?per_page=100&page=${page}`;
       const headers = new Headers({
         'Authorization': `token ${apiToken}`,
       });
@@ -93,7 +93,7 @@
       while (resJson.length > 0) {
         resJson = await fetchGithubRepositories(apiUrl, apiToken, page);
         resJson.forEach(repo => {
-          const row = keys.map(key => repo[key] || '');
+          const row = keys.map(key => repo[key] ? ('\"' + repo[key] + '\"') : '');
           csvData.push(row.join(","));
         });
         page++;
